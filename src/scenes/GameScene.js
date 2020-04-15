@@ -25,7 +25,6 @@ export default class GameScene extends Phaser.Scene {
 
   create() {
     this.add.image(400, 300, "sky");
-    // this.add.image(400, 300, "star");
 
     const platforms = this.createPlatforms();
     this.player = this.createPlayer();
@@ -44,10 +43,11 @@ export default class GameScene extends Phaser.Scene {
 
     return platforms;
   }
+
   createPlayer() {
     const player = this.physics.add.sprite(100, 450, DUDE_KEY);
-    this.player.setBounce(0.2);
-    this.player.setCollideWorldBounds(true);
+    player.setBounce(0.2);
+    player.setCollideWorldBounds(true);
 
     this.anims.create({
       key: "left",
