@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 
+import ScoreLabel from "../ui/ScoreLabel";
+
 // constants to avoid typos in reapeated word ground
 const GROUND_KEY = "ground";
 const DUDE_KEY = "dude";
@@ -11,6 +13,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.player = undefined;
     this.cursors = undefined;
+    this.scoreLabel = undefined;
   }
 
   preload() {
@@ -32,6 +35,8 @@ export default class GameScene extends Phaser.Scene {
     this.player = this.createPlayer();
     const stars = this.createStars();
 
+    this.scoreLabel = this.createScoreLabel(16, 16, 0);
+
     this.physics.add.collider(this.player, platforms);
     this.physics.add.collider(stars, platforms);
 
@@ -42,6 +47,8 @@ export default class GameScene extends Phaser.Scene {
 
   collectStar(player, star) {
     star.disableBody(true, true);
+
+    this.scoreLabel.add(10);
   }
 
   update() {
@@ -116,5 +123,14 @@ export default class GameScene extends Phaser.Scene {
     });
 
     return stars;
+  }
+
+  createScoreLabel(x, y, score) {
+    const style = { fontSize: "32px", fill: "#000" };
+    const label = new ScoreLabel(this, x, y, score, style);
+
+    this.add.existing(label);
+
+    return label;
   }
 }
