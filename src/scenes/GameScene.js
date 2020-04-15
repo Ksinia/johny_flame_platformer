@@ -35,7 +35,13 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.player, platforms);
     this.physics.add.collider(stars, platforms);
 
+    this.physics.add.overlap(this.player, stars, this.collectStar, null, this);
+
     this.cursors = this.input.keyboard.createCursorKeys();
+  }
+
+  collectStar(player, star) {
+    star.disableBody(true, true);
   }
 
   update() {
