@@ -3,18 +3,20 @@ import Phaser from "phaser";
 // constants to avoid typos in reapeated word ground
 const GROUND_KEY = "ground";
 const DUDE_KEY = "dude";
+const STAR_KEY = "star";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super("game-scene");
 
     this.player = undefined;
+    this.cursors = undefined;
   }
 
   preload() {
     this.load.image("sky", "assets/sky.png");
     this.load.image(GROUND_KEY, "assets/platform.png");
-    this.load.image("star", "assets/star.png");
+    this.load.image(STAR_KEY, "assets/star.png");
     this.load.image("bomb", "assets/bomb.png");
 
     this.load.spritesheet(DUDE_KEY, "assets/dude.png", {
@@ -28,8 +30,32 @@ export default class GameScene extends Phaser.Scene {
 
     const platforms = this.createPlatforms();
     this.player = this.createPlayer();
+    const stars = this.createStars();
 
     this.physics.add.collider(this.player, platforms);
+    this.physics.add.collider(stars, platforms);
+
+    this.cursors = this.input.keyboard.createCursorKeys();
+  }
+
+  update() {
+    if (this.cursors.left.isDown) {
+      this.player.setVelocityX(-160);
+
+      this.player.anims.play("left", true);
+    } else if (this.cursors.right.isDown) {
+      this.player.setVelocityX(160);
+
+      this.player.anims.play("right", true);
+    } else {
+      this.player.setVelocityX(0);
+
+      this.player.anims.play("turn");
+    }
+
+    if (this.cursors.up.isDown && this.player.body.touching.down) {
+      this.player.setVelocityY(-330);
+    }
   }
 
   createPlatforms() {
@@ -70,5 +96,19 @@ export default class GameScene extends Phaser.Scene {
     });
 
     return player;
+  }
+
+  createStars() {
+    const stars = this.physics.add.group({
+      key: STAR_KEY,
+      repeat: 11,
+      setXY: { x: 12, y: 0, stepX: 70 },
+    });
+
+    stars.children.iterate((child) => {
+      child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+    });
+
+    return stars;
   }
 }
