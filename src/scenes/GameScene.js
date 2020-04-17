@@ -19,6 +19,7 @@ export default class GameScene extends Phaser.Scene {
     this.bombSpawner = undefined;
     this.stars = undefined;
 
+    this.map = undefined;
     this.gameOver = false;
   }
 
@@ -29,6 +30,11 @@ export default class GameScene extends Phaser.Scene {
     this.load.image("bomb", "assets/bomb.png");
     this.load.image(BOMB_KEY, "assets/bomb.png");
 
+    this.load.tilemapTiledJSON("map", "assets/map.json");
+    this.load.spritesheet("tiles", "assets/tiles.png", {
+      frameWidth: 70,
+      frameHeight: 70,
+    });
     this.load.spritesheet(DUDE_KEY, "assets/dude.png", {
       frameWidth: 32,
       frameHeight: 48,
@@ -36,14 +42,25 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.add.image(400, 300, "sky");
-
+    // this.add.image(400, 300, "sky");
     const platforms = this.createPlatforms();
     this.player = this.createPlayer();
     this.stars = this.createStars();
 
-    this.scoreLabel = this.createScoreLabel(16, 16, 0);
+    this.map = this.make.tilemap({ key: "map" });
+    // tiles for the ground layer
+    const groundTiles = this.map.addTilesetImage("tiles");
+    // create the ground layer
+    const groundLayer = this.map.createDynamicLayer("World", groundTiles, 0, 0);
+    // the player will collide with this layer
+    groundLayer.setCollisionByExclusion([-1]);
 
+    // set the boundaries of our game world
+    this.physics.world.bounds.width = groundLayer.width;
+    this.physics.world.bounds.height = groundLayer.height;
+    this.scoreLabel = this.createScoreLabel(16, 16, 0);
+    this.scoreLabel.scrollFactorX = 0;
+    this.scoreLabel.scrollFactorY = 0;
     this.bombSpawner = new BombSpawner(this, BOMB_KEY);
     const bombsGroup = this.bombSpawner.group;
 
@@ -57,6 +74,8 @@ export default class GameScene extends Phaser.Scene {
       null,
       this
     );
+    this.physics.add.collider(this.player, groundLayer);
+    this.physics.add.collider(this.stars, groundLayer);
 
     this.physics.add.overlap(
       this.player,
@@ -65,6 +84,18 @@ export default class GameScene extends Phaser.Scene {
       null,
       this
     );
+
+    // set bounds so the camera won't go outside the game world
+    this.cameras.main.setBounds(
+      0,
+      0,
+      this.map.widthInPixels,
+      this.map.heightInPixels
+    );
+    // make the camera follow the player
+    this.cameras.main.startFollow(this.player);
+    // set background color, so the sky is not black
+    this.cameras.main.setBackgroundColor("#ccccff");
 
     this.cursors = this.input.keyboard.createCursorKeys();
   }
@@ -102,19 +133,29 @@ export default class GameScene extends Phaser.Scene {
       this.player.anims.play("turn");
     }
 
-    if (this.cursors.up.isDown && this.player.body.touching.down) {
+    if (
+      this.cursors.up.isDown &&
+      (this.player.body.touching.down || this.player.body.onFloor())
+    ) {
       this.player.setVelocityY(-330);
+    }
+    if (this.scoreLabel.score < 0) {
+      console.log(this.scoreLabel.score);
+      this.physics.pause();
+      this.player.setTint(0xff0000);
+      this.player.anims.play("turn");
+      this.gameOver = true;
     }
   }
 
   createPlatforms() {
     const platforms = this.physics.add.staticGroup();
 
-    platforms.create(400, 568, GROUND_KEY).setScale(2).refreshBody();
+    // platforms.create(400, 568, GROUND_KEY).setScale(2).refreshBody();
 
-    platforms.create(600, 400, GROUND_KEY);
+    platforms.create(600, 450, GROUND_KEY);
     platforms.create(50, 250, GROUND_KEY);
-    platforms.create(750, 220, GROUND_KEY);
+    platforms.create(750, 200, GROUND_KEY);
 
     return platforms;
   }
@@ -171,12 +212,10 @@ export default class GameScene extends Phaser.Scene {
   }
 
   hitBomb(player, bomb) {
-    this.physics.pause();
-
-    player.setTint(0xff0000);
-
-    player.anims.play("turn");
-
-    this.gameOver = true;
+    // this.physics.pause();
+    // player.setTint(0xff0000);
+    // player.anims.play("turn");
+    this.scoreLabel.add(-10);
+    // this.gameOver = true;
   }
 }
