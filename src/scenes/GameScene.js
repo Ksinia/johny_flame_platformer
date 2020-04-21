@@ -2,6 +2,7 @@ import Phaser from "phaser";
 
 import ScoreLabel from "../ui/ScoreLabel";
 import BombSpawner from "./BombSpawner";
+import mapJSON from "../../public/assets/volcano2.json";
 
 // constants to avoid typos in reapeated word ground
 const GROUND_KEY = "ground";
@@ -30,11 +31,14 @@ export default class GameScene extends Phaser.Scene {
     this.load.image("bomb", "assets/bomb.png");
     this.load.image(BOMB_KEY, "assets/bomb.png");
 
-    this.load.tilemapTiledJSON("map", "assets/map.json");
-    this.load.spritesheet("tiles", "assets/tiles.png", {
-      frameWidth: 70,
-      frameHeight: 70,
-    });
+    this.load.tilemapTiledJSON("map", "assets/volcano2.json");
+    mapJSON.tilesets.forEach((tileset) =>
+      this.load.spritesheet(tileset.name, `assets/${tileset.image}`, {
+        frameWidth: tileset.tilewidth,
+        frameHeight: tileset.tileheight,
+      })
+    );
+
     this.load.spritesheet(DUDE_KEY, "assets/dude.png", {
       frameWidth: 32,
       frameHeight: 48,
@@ -43,17 +47,23 @@ export default class GameScene extends Phaser.Scene {
 
   create() {
     // this.add.image(400, 300, "sky");
-    const platforms = this.createPlatforms();
+    // const platforms = this.createPlatforms();
     this.player = this.createPlayer();
     this.stars = this.createStars();
 
     this.map = this.make.tilemap({ key: "map" });
     // tiles for the ground layer
-    const groundTiles = this.map.addTilesetImage("tiles");
+    const groundTiles = mapJSON.tilesets.map((tileset) =>
+      this.map.addTilesetImage(tileset.name)
+    );
+    // const groundTiles = [this.map.addTilesetImage("volcano_pack_59")];
+    const waterTiles = this.map.addTilesetImage("volcano_pack_51");
     // create the ground layer
-    const groundLayer = this.map.createDynamicLayer("World", groundTiles, 0, 0);
+    const groundLayer = this.map.createDynamicLayer("ground", groundTiles);
+    console.log(groundLayer);
+    const waterLayer = this.map.createDynamicLayer("water", waterTiles);
     // the player will collide with this layer
-    groundLayer.setCollisionByExclusion([-1]);
+    groundLayer.setCollisionByProperty({ collides: true });
 
     // set the boundaries of our game world
     this.physics.world.bounds.width = groundLayer.width;
@@ -64,9 +74,9 @@ export default class GameScene extends Phaser.Scene {
     this.bombSpawner = new BombSpawner(this, BOMB_KEY);
     const bombsGroup = this.bombSpawner.group;
 
-    this.physics.add.collider(this.player, platforms);
-    this.physics.add.collider(this.stars, platforms);
-    this.physics.add.collider(bombsGroup, platforms);
+    // this.physics.add.collider(this.player, platforms);
+    // this.physics.add.collider(this.stars, platforms);
+    // this.physics.add.collider(bombsGroup, platforms);
     this.physics.add.collider(
       this.player,
       bombsGroup,
@@ -137,7 +147,8 @@ export default class GameScene extends Phaser.Scene {
       this.cursors.up.isDown &&
       (this.player.body.touching.down || this.player.body.onFloor())
     ) {
-      this.player.setVelocityY(-330);
+      this.player.setVelocityY(-400);
+      // this.player.setVelocityY(-330);
     }
     if (this.scoreLabel.score < 0) {
       console.log(this.scoreLabel.score);
@@ -148,21 +159,21 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  createPlatforms() {
-    const platforms = this.physics.add.staticGroup();
+  // createPlatforms() {
+  //   const platforms = this.physics.add.staticGroup();
 
-    // platforms.create(400, 568, GROUND_KEY).setScale(2).refreshBody();
+  //   platforms.create(400, 568, GROUND_KEY).setScale(2).refreshBody();
 
-    platforms.create(600, 450, GROUND_KEY);
-    platforms.create(50, 250, GROUND_KEY);
-    platforms.create(750, 200, GROUND_KEY);
+  //   platforms.create(600, 450, GROUND_KEY);
+  //   platforms.create(50, 250, GROUND_KEY);
+  //   platforms.create(750, 200, GROUND_KEY);
 
-    return platforms;
-  }
+  //   return platforms;
+  // }
 
   createPlayer() {
     const player = this.physics.add.sprite(100, 450, DUDE_KEY);
-    player.setBounce(0.2);
+    player.setBounce(0.1);
     player.setCollideWorldBounds(true);
 
     this.anims.create({
