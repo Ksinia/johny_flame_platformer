@@ -9,10 +9,14 @@ const GROUND_KEY = "ground";
 const DUDE_KEY = "dude";
 const STAR_KEY = "star";
 const BOMB_KEY = "bomb";
+const BACKGROUND_LAYER_BASE_KEY = "background_";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super("game-scene");
+
+    this.worldWidth = 4480;
+    this.worldHeight = 1280;
 
     this.player = undefined;
     this.cursors = undefined;
@@ -20,12 +24,19 @@ export default class GameScene extends Phaser.Scene {
     this.bombSpawner = undefined;
     this.stars = undefined;
 
+    this.background = undefined;
+
     this.map = undefined;
     this.gameOver = false;
   }
 
   preload() {
-    this.load.image("sky", "assets/sky.png");
+    for (let i = 1; i <= 6; i++) {
+      this.load.image(
+        `${BACKGROUND_LAYER_BASE_KEY}${i}`,
+        `assets/volcano_tiles/bg_volcano_layers/bg_volcano_${i}.png`
+      );
+    }
     this.load.image(GROUND_KEY, "assets/platform.png");
     this.load.image(STAR_KEY, "assets/star.png");
     this.load.image("bomb", "assets/bomb.png");
@@ -46,8 +57,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
-    // this.add.image(400, 300, "sky");
-    // const platforms = this.createPlatforms();
+    this.background = this.createBackground();
+
     this.player = this.createPlayer();
     this.stars = this.createStars();
 
@@ -56,27 +67,27 @@ export default class GameScene extends Phaser.Scene {
     const groundTiles = mapJSON.tilesets.map((tileset) =>
       this.map.addTilesetImage(tileset.name)
     );
-    // const groundTiles = [this.map.addTilesetImage("volcano_pack_59")];
+    // tiles for the water layer
     const waterTiles = this.map.addTilesetImage("volcano_pack_51");
     // create the ground layer
     const groundLayer = this.map.createDynamicLayer("ground", groundTiles);
-    console.log(groundLayer);
+
+    // create the water layer
     const waterLayer = this.map.createDynamicLayer("water", waterTiles);
-    // the player will collide with this layer
-    groundLayer.setCollisionByProperty({ collides: true });
 
     // set the boundaries of our game world
     this.physics.world.bounds.width = groundLayer.width;
     this.physics.world.bounds.height = groundLayer.height;
-    this.scoreLabel = this.createScoreLabel(16, 16, 0);
-    this.scoreLabel.scrollFactorX = 0;
-    this.scoreLabel.scrollFactorY = 0;
+
+    // creare score label in the left top corner which moves with the camera
+    this.scoreLabel = this.createScoreLabel(16, 16, 0).setScrollFactor(0, 0);
+
     this.bombSpawner = new BombSpawner(this, BOMB_KEY);
     const bombsGroup = this.bombSpawner.group;
 
-    // this.physics.add.collider(this.player, platforms);
-    // this.physics.add.collider(this.stars, platforms);
-    // this.physics.add.collider(bombsGroup, platforms);
+    // set collisions
+    groundLayer.setCollisionByProperty({ collides: true });
+
     this.physics.add.collider(
       this.player,
       bombsGroup,
@@ -105,7 +116,6 @@ export default class GameScene extends Phaser.Scene {
     // make the camera follow the player
     this.cameras.main.startFollow(this.player);
     // set background color, so the sky is not black
-    this.cameras.main.setBackgroundColor("#ccccff");
 
     this.cursors = this.input.keyboard.createCursorKeys();
   }
@@ -148,10 +158,8 @@ export default class GameScene extends Phaser.Scene {
       (this.player.body.touching.down || this.player.body.onFloor())
     ) {
       this.player.setVelocityY(-400);
-      // this.player.setVelocityY(-330);
     }
     if (this.scoreLabel.score < 0) {
-      console.log(this.scoreLabel.score);
       this.physics.pause();
       this.player.setTint(0xff0000);
       this.player.anims.play("turn");
@@ -159,17 +167,66 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  // createPlatforms() {
-  //   const platforms = this.physics.add.staticGroup();
+  createBackground() {
+    // Base width and height of the images
+    const imageBaseWidth = 1280;
+    const imageBaseHeight = 720;
+    const ratio = this.worldHeight / imageBaseHeight;
+    const imageWidth = imageBaseWidth * ratio;
 
-  //   platforms.create(400, 568, GROUND_KEY).setScale(2).refreshBody();
+    const backgroundLayers = this.physics.add.staticGroup();
 
-  //   platforms.create(600, 450, GROUND_KEY);
-  //   platforms.create(50, 250, GROUND_KEY);
-  //   platforms.create(750, 200, GROUND_KEY);
+    // add fixed layer of backround
+    backgroundLayers
+      .create(0, 0, `${BACKGROUND_LAYER_BASE_KEY}6`)
+      .setOrigin(0, 0)
+      .setScale(ratio)
+      .setScrollFactor(0, 1)
+      .refreshBody();
 
-  //   return platforms;
-  // }
+    // add parallaxing layers of background
+    this.createBackgroundElements(
+      backgroundLayers,
+      imageWidth,
+      ratio,
+      this.worldHeight,
+      5,
+      0.1
+    );
+    this.createBackgroundElements(
+      backgroundLayers,
+      imageWidth,
+      ratio,
+      700,
+      4,
+      0.2
+    );
+    this.createBackgroundElements(
+      backgroundLayers,
+      imageWidth,
+      ratio,
+      600,
+      3,
+      0.3
+    );
+    this.createBackgroundElements(
+      backgroundLayers,
+      imageWidth,
+      ratio,
+      450,
+      2,
+      0.4
+    );
+    this.createBackgroundElements(
+      backgroundLayers,
+      imageWidth,
+      ratio,
+      320,
+      1,
+      0.5
+    );
+    return backgroundLayers;
+  }
 
   createPlayer() {
     const player = this.physics.add.sprite(100, 450, DUDE_KEY);
@@ -228,5 +285,27 @@ export default class GameScene extends Phaser.Scene {
     // player.anims.play("turn");
     this.scoreLabel.add(-10);
     // this.gameOver = true;
+  }
+
+  createBackgroundElements(
+    group,
+    imageWidth,
+    ratio,
+    verticalOffset,
+    key,
+    xScrollFactor
+  ) {
+    for (let i = 0; i * imageWidth <= this.worldWidth; i++) {
+      group
+        .create(
+          i * imageWidth,
+          this.worldHeight - verticalOffset,
+          `${BACKGROUND_LAYER_BASE_KEY}${key}`
+        )
+        .setOrigin(0, 0)
+        .setScale(ratio)
+        .setScrollFactor(xScrollFactor, 1)
+        .refreshBody();
+    }
   }
 }
