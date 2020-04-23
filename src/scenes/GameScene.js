@@ -4,7 +4,7 @@ import ScoreLabel from "../ui/ScoreLabel";
 import BombSpawner from "./BombSpawner";
 import mapJSON from "../../public/assets/volcano2.json";
 
-// constants to avoid typos in reapeated word ground
+// constants
 const GROUND_KEY = "ground";
 const DUDE_KEY = "dude";
 const STAR_KEY = "star";
@@ -13,7 +13,7 @@ const BACKGROUND_LAYER_BASE_KEY = "background_";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
-    super("game-scene");
+    super("GameScene");
 
     this.worldWidth = 4480;
     this.worldHeight = 1280;
@@ -21,6 +21,7 @@ export default class GameScene extends Phaser.Scene {
     this.player = undefined;
     this.cursors = undefined;
     this.scoreLabel = undefined;
+    this.highScore = undefined;
     this.bombSpawner = undefined;
     this.stars = undefined;
 
@@ -57,6 +58,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
+    this.gameOver = false;
+
     this.background = this.createBackground();
 
     this.player = this.createPlayer();
@@ -79,14 +82,27 @@ export default class GameScene extends Phaser.Scene {
     this.physics.world.bounds.width = groundLayer.width;
     this.physics.world.bounds.height = groundLayer.height;
 
+    this.highScore = localStorage.getItem("highScore") || 0;
+    localStorage.setItem("highScore", this.highScore);
     // creare score label in the left top corner which moves with the camera
-    this.scoreLabel = this.createScoreLabel(16, 16, 0).setScrollFactor(0, 0);
-
+    this.scoreLabel = new ScoreLabel(
+      this,
+      16,
+      16,
+      0,
+      this.highScore
+    ).setScrollFactor(0, 0);
+    this.add.existing(this.scoreLabel);
     this.bombSpawner = new BombSpawner(this, BOMB_KEY);
     const bombsGroup = this.bombSpawner.group;
 
     // set collisions
     groundLayer.setCollisionByProperty({ collides: true });
+    this.physics.add.collider(this.player, groundLayer);
+    
+    // 8 is id of water tile
+    waterLayer.setTileIndexCallback(8, ()=>{this.player.disableBody(); this.gameOverMethod()}, this);
+    this.physics.add.overlap(this.player, waterLayer);
 
     this.physics.add.collider(
       this.player,
@@ -95,7 +111,7 @@ export default class GameScene extends Phaser.Scene {
       null,
       this
     );
-    this.physics.add.collider(this.player, groundLayer);
+
     this.physics.add.collider(this.stars, groundLayer);
 
     this.physics.add.overlap(
@@ -115,24 +131,12 @@ export default class GameScene extends Phaser.Scene {
     );
     // make the camera follow the player
     this.cameras.main.startFollow(this.player);
-    // set background color, so the sky is not black
 
     this.cursors = this.input.keyboard.createCursorKeys();
-  }
 
-  collectStar(player, star) {
-    star.disableBody(true, true);
-
-    this.scoreLabel.add(10);
-
-    if (this.stars.countActive(true) === 0) {
-      //  A new batch of stars to collect
-      this.stars.children.iterate((child) => {
-        child.enableBody(true, child.x, 0, true, true);
-      });
-    }
-
-    this.bombSpawner.spawn(player.x);
+    this.input.keyboard.on("keydown-Q", () => {
+      this.gameOverMethod();
+    });
   }
 
   update() {
@@ -160,11 +164,26 @@ export default class GameScene extends Phaser.Scene {
       this.player.setVelocityY(-400);
     }
     if (this.scoreLabel.score < 0) {
-      this.physics.pause();
-      this.player.setTint(0xff0000);
-      this.player.anims.play("turn");
-      this.gameOver = true;
+      this.gameOverMethod();
     }
+  }
+
+  collectStar(player, star) {
+    star.disableBody(true, true);
+    this.scoreLabel.add(10);
+    if (this.scoreLabel.score > this.highScore) {
+      this.highScore = this.scoreLabel.score;
+      localStorage.setItem("highScore", this.scoreLabel.score);
+      this.scoreLabel.setHighScore(this.scoreLabel.score);
+    }
+    if (this.stars.countActive(true) === 0) {
+      //  A new batch of stars to collect
+      this.stars.children.iterate((child) => {
+        child.enableBody(true, child.x, 0, true, true);
+      });
+    }
+
+    this.bombSpawner.spawn(player.x);
   }
 
   createBackground() {
@@ -259,7 +278,7 @@ export default class GameScene extends Phaser.Scene {
   createStars() {
     const stars = this.physics.add.group({
       key: STAR_KEY,
-      repeat: 11,
+      repeat: 20,
       setXY: { x: 12, y: 0, stepX: 70 },
     });
 
@@ -270,21 +289,8 @@ export default class GameScene extends Phaser.Scene {
     return stars;
   }
 
-  createScoreLabel(x, y, score) {
-    const style = { fontSize: "32px", fill: "#000" };
-    const label = new ScoreLabel(this, x, y, score, style);
-
-    this.add.existing(label);
-
-    return label;
-  }
-
-  hitBomb(player, bomb) {
-    // this.physics.pause();
-    // player.setTint(0xff0000);
-    // player.anims.play("turn");
+  hitBomb() {
     this.scoreLabel.add(-10);
-    // this.gameOver = true;
   }
 
   createBackgroundElements(
@@ -307,5 +313,18 @@ export default class GameScene extends Phaser.Scene {
         .setScrollFactor(xScrollFactor, 1)
         .refreshBody();
     }
+  }
+
+  gameOverMethod() {
+    this.player.disableBody()
+    this.gameOver = true;
+    this.player.setTint(0xff0000);
+    this.player.anims.play("turn");
+    this.cameras.main.fadeOut(5000, 128, 128, 128, (_, progress) => {
+      if (progress >= 0.5) {
+        this.scene.pause();
+      }
+    });
+    this.scene.run("GameOverScene");
   }
 }
