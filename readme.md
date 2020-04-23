@@ -2,7 +2,7 @@
 
 Simple 2D platformer created to get familiar with [Phaser](https://phaser.io/).
 
-![Screenshot](https://user-images.githubusercontent.com/42918058/80053173-94c8fd80-851c-11ea-8dcb-f7e6932bbc70.png)
+[![Screenshot](https://user-images.githubusercontent.com/42918058/80053173-94c8fd80-851c-11ea-8dcb-f7e6932bbc70.png)](https://scrolling-platformer.netlify.app/)
 
 ## Prerequisites
 
