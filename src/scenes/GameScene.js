@@ -72,11 +72,12 @@ export default class GameScene extends Phaser.Scene {
     );
     // tiles for the water layer
     const waterTiles = this.map.addTilesetImage("volcano_pack_51");
+
     // create the ground layer
-    const groundLayer = this.map.createDynamicLayer("ground", groundTiles);
+    const groundLayer = this.map.createStaticLayer("ground", groundTiles);
 
     // create the water layer
-    const waterLayer = this.map.createDynamicLayer("water", waterTiles);
+    const waterLayer = this.map.createStaticLayer("water", waterTiles);
 
     // set the boundaries of our game world
     this.physics.world.bounds.width = groundLayer.width;
@@ -99,9 +100,16 @@ export default class GameScene extends Phaser.Scene {
     // set collisions
     groundLayer.setCollisionByProperty({ collides: true });
     this.physics.add.collider(this.player, groundLayer);
-    
+
     // 8 is id of water tile
-    waterLayer.setTileIndexCallback(8, ()=>{this.player.disableBody(); this.gameOverMethod()}, this);
+    waterLayer.setTileIndexCallback(
+      8,
+      () => {
+        this.player.disableBody();
+        this.gameOverMethod();
+      },
+      this
+    );
     this.physics.add.overlap(this.player, waterLayer);
 
     this.physics.add.collider(
@@ -316,7 +324,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   gameOverMethod() {
-    this.player.disableBody()
+    this.player.disableBody();
     this.gameOver = true;
     this.player.setTint(0xff0000);
     this.player.anims.play("turn");

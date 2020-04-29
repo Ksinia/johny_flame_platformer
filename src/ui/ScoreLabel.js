@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 
-const formatScore = (score, highScore) => `Score: ${score}\nHigh Score: ${highScore}`;
+const formatScore = (score, highScore) =>
+  `Score: ${score}\nHigh Score: ${highScore}`;
 
 const style = { fontSize: 32, fill: "#fff" };
 

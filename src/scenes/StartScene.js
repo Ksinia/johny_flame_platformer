@@ -6,13 +6,17 @@ export default class StartScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("background", "assets/volcano_tiles/bg_volcano_layers/bg_volcano_6.png");
+    this.load.image(
+      "background",
+      "assets/volcano_tiles/bg_volcano_layers/bg_volcano_6.png"
+    );
   }
 
   create() {
     this.add.image(400, 300, "background");
-    const text = this.add.text(400, 300, "Start Game", {fontSize: 32})
-    .setOrigin(0.5)
+    const text = this.add
+      .text(400, 300, "Start Game", { fontSize: 32 })
+      .setOrigin(0.5);
     text.setInteractive({ useHandCursor: true });
     text.on("pointerdown", () => this.clickButton());
 
