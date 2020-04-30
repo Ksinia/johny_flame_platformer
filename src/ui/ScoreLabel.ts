@@ -1,28 +1,36 @@
 import Phaser from "phaser";
 
-const formatScore = (score, highScore) =>
+const formatScore = (score: number, highScore: number) =>
   `Score: ${score}\nHigh Score: ${highScore}`;
 
-const style = { fontSize: 32, fill: "#fff" };
+const style: any = { fontSize: 32, fill: "#fff" };
 
 export default class ScoreLabel extends Phaser.GameObjects.Text {
-  constructor(scene, x, y, score, highScore) {
+  score: number;
+  highScore: number;
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    score: number,
+    highScore: number
+  ) {
     super(scene, x, y, formatScore(score, highScore), style);
 
     this.score = score;
     this.highScore = highScore;
   }
 
-  setScore(score) {
+  setScore(score: number) {
     this.score = score;
     this.updateScoreText();
   }
-  setHighScore(highScore) {
+  setHighScore(highScore: number) {
     this.highScore = highScore;
     this.updateScoreText();
   }
 
-  add(points) {
+  add(points: number) {
     this.setScore(this.score + points);
   }
 

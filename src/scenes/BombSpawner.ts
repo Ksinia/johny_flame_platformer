@@ -3,8 +3,12 @@ import Phaser from "phaser";
 export default class BombSpawner {
   /**
    * @param {Phaser.Scene} scene
+   * @param {string} bombKey
    */
-  constructor(scene, bombKey = "bomb") {
+  scene: Phaser.Scene;
+  key: string;
+  _group: Phaser.Physics.Arcade.Group;
+  constructor(scene: Phaser.Scene, bombKey: string = "bomb") {
     this.scene = scene;
     this.key = bombKey;
 

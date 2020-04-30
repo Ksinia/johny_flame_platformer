@@ -5,29 +5,28 @@ import BombSpawner from "./BombSpawner";
 import mapJSON from "../../public/assets/volcano2.json";
 
 // constants
-const GROUND_KEY = "ground";
 const DUDE_KEY = "dude";
 const STAR_KEY = "star";
 const BOMB_KEY = "bomb";
 const BACKGROUND_LAYER_BASE_KEY = "background_";
 
 export default class GameScene extends Phaser.Scene {
+  worldWidth: number;
+  worldHeight: number;
+  gameOver: boolean;
+  background!: Phaser.Physics.Arcade.StaticGroup;
+  player!: Phaser.Physics.Arcade.Sprite;
+  stars!: Phaser.Physics.Arcade.Group;
+  map!: Phaser.Tilemaps.Tilemap;
+  highScore!: number;
+  scoreLabel!: ScoreLabel;
+  bombSpawner!: BombSpawner;
+  cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   constructor() {
     super("GameScene");
 
     this.worldWidth = 4480;
     this.worldHeight = 1280;
-
-    this.player = undefined;
-    this.cursors = undefined;
-    this.scoreLabel = undefined;
-    this.highScore = undefined;
-    this.bombSpawner = undefined;
-    this.stars = undefined;
-
-    this.background = undefined;
-
-    this.map = undefined;
     this.gameOver = false;
   }
 
@@ -38,17 +37,16 @@ export default class GameScene extends Phaser.Scene {
         `assets/volcano_tiles/bg_volcano_layers/bg_volcano_${i}.png`
       );
     }
-    this.load.image(GROUND_KEY, "assets/platform.png");
     this.load.image(STAR_KEY, "assets/star.png");
-    this.load.image("bomb", "assets/bomb.png");
     this.load.image(BOMB_KEY, "assets/bomb.png");
 
     this.load.tilemapTiledJSON("map", "assets/volcano2.json");
-    mapJSON.tilesets.forEach((tileset) =>
-      this.load.spritesheet(tileset.name, `assets/${tileset.image}`, {
-        frameWidth: tileset.tilewidth,
-        frameHeight: tileset.tileheight,
-      })
+    mapJSON.tilesets.forEach(
+      (tileset: {tilewidth: number, tileheight: number, name: string, image: string}) =>
+        this.load.spritesheet(tileset.name, `assets/${tileset.image}`, {
+          frameWidth: tileset.tilewidth,
+          frameHeight: tileset.tileheight,
+        })
     );
 
     this.load.spritesheet(DUDE_KEY, "assets/dude.png", {
@@ -67,7 +65,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.map = this.make.tilemap({ key: "map" });
     // tiles for the ground layer
-    const groundTiles = mapJSON.tilesets.map((tileset) =>
+    const groundTiles = mapJSON.tilesets.map((tileset: {name: string}) =>
       this.map.addTilesetImage(tileset.name)
     );
     // tiles for the water layer
@@ -83,8 +81,8 @@ export default class GameScene extends Phaser.Scene {
     this.physics.world.bounds.width = groundLayer.width;
     this.physics.world.bounds.height = groundLayer.height;
 
-    this.highScore = localStorage.getItem("highScore") || 0;
-    localStorage.setItem("highScore", this.highScore);
+    this.highScore = parseInt(String(localStorage.getItem("highScore"))) || 0;
+    localStorage.setItem("highScore", String(this.highScore));
     // creare score label in the left top corner which moves with the camera
     this.scoreLabel = new ScoreLabel(
       this,
@@ -116,7 +114,7 @@ export default class GameScene extends Phaser.Scene {
       this.player,
       bombsGroup,
       this.hitBomb,
-      null,
+      undefined,
       this
     );
 
@@ -126,7 +124,7 @@ export default class GameScene extends Phaser.Scene {
       this.player,
       this.stars,
       this.collectStar,
-      null,
+      undefined,
       this
     );
 
@@ -141,21 +139,17 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player);
 
     this.cursors = this.input.keyboard.createCursorKeys();
-
-    this.input.keyboard.on("keydown-Q", () => {
-      this.gameOverMethod();
-    });
   }
 
   update() {
     if (this.gameOver) {
       return;
     }
-    if (this.cursors.left.isDown) {
+    if (this.cursors.left && this.cursors.left.isDown) {
       this.player.setVelocityX(-160);
 
       this.player.anims.play("left", true);
-    } else if (this.cursors.right.isDown) {
+    } else if (this.cursors.right && this.cursors.right.isDown) {
       this.player.setVelocityX(160);
 
       this.player.anims.play("right", true);
@@ -165,9 +159,9 @@ export default class GameScene extends Phaser.Scene {
       this.player.anims.play("turn");
     }
 
-    if (
+    if (this.cursors.up &&
       this.cursors.up.isDown &&
-      (this.player.body.touching.down || this.player.body.onFloor())
+      (this.player.body.touching.down || (this.player.body instanceof Phaser.Physics.Arcade.Body && this.player.body.onFloor()))
     ) {
       this.player.setVelocityY(-400);
     }
@@ -176,12 +170,12 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  collectStar(player, star) {
+  collectStar(player: any, star: any) {
     star.disableBody(true, true);
     this.scoreLabel.add(10);
     if (this.scoreLabel.score > this.highScore) {
       this.highScore = this.scoreLabel.score;
-      localStorage.setItem("highScore", this.scoreLabel.score);
+      localStorage.setItem("highScore", String(this.scoreLabel.score));
       this.scoreLabel.setHighScore(this.scoreLabel.score);
     }
     if (this.stars.countActive(true) === 0) {
@@ -302,12 +296,12 @@ export default class GameScene extends Phaser.Scene {
   }
 
   createBackgroundElements(
-    group,
-    imageWidth,
-    ratio,
-    verticalOffset,
-    key,
-    xScrollFactor
+    group: Phaser.Physics.Arcade.StaticGroup,
+    imageWidth: number,
+    ratio: number,
+    verticalOffset: number,
+    key: number,
+    xScrollFactor: number
   ) {
     for (let i = 0; i * imageWidth <= this.worldWidth; i++) {
       group
@@ -328,7 +322,7 @@ export default class GameScene extends Phaser.Scene {
     this.gameOver = true;
     this.player.setTint(0xff0000);
     this.player.anims.play("turn");
-    this.cameras.main.fadeOut(5000, 128, 128, 128, (_, progress) => {
+    this.cameras.main.fadeOut(5000, 128, 128, 128, (_: any, progress: number) => {
       if (progress >= 0.5) {
         this.scene.pause();
       }

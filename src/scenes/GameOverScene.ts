@@ -15,7 +15,7 @@ export default class GameOverScene extends Phaser.Scene {
     playAgainText.setInteractive({ useHandCursor: true });
     playAgainText.on("pointerdown", () => this.clickButton());
 
-    this.input.keyboard.on("keydown-ENTER", (event) => {
+    this.input.keyboard.on("keydown-ENTER", () => {
       this.clickButton();
     });
   }
