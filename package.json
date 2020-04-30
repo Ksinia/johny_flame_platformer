@@ -1,27 +1,24 @@
 {
-	"name": "phaser3-parcel-template",
-	"version": "1.0.0",
-	"description": "A template project for Phaser3 using Parceljs",
+	"name": "johny-flame",
+	"version": "0.0.1",
+	"description": "Johny Flame game - A scroling platformer made with Phaser3 and Parceljs",
 	"scripts": {
 		"start": "parcel src/index.html -p 8000",
 		"build": "parcel build src/index.html --out-dir dist",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
-	"author": "supertommy",
+	"author": "Ksenia Gulyaeva",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ourcade/phaser3-parcel-template.git"
+		"url": "https://github.com/Ksinia/johny_flame_platformer.git"
 	},
-	"homepage": "https://github.com/ourcade/phaser3-parcel-template",
+	"homepage": "https://github.com/Ksinia/johny_flame_platformer",
 	"devDependencies": {
-		"minimist": ">=1.2.2",
-		"parcel-bundler": "^1.12.4",
-		"parcel-plugin-clean-easy": "^1.0.2",
-		"parcel-plugin-static-files-copy": "^2.2.1"
+		"parcel-bundler": "^1.12.4"
 	},
 	"dependencies": {
-		"phaser": "^3.22.0"
+		"phaser": "^3.23.0"
 	},
 	"parcelCleanPaths": [
 		"dist"
