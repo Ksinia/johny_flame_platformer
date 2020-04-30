@@ -15,7 +15,8 @@
 	},
 	"homepage": "https://github.com/Ksinia/johny_flame_platformer",
 	"devDependencies": {
-		"parcel-bundler": "^1.12.4"
+		"parcel-bundler": "^1.12.4",
+		"parcel-plugin-static-files-copy": "^2.3.1"
 	},
 	"dependencies": {
 		"phaser": "^3.23.0"
